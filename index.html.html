@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Q-Connector V2 — Product Finder</title>
+  <style>
+    body { font-family: sans-serif; padding: 40px 20px; background: #fff; color: #222; }
+    #qc-b2b { max-width: 900px; margin: 0 auto; }
+    .qc-logo { text-align:center; margin-bottom:24px; }
+    .qc-logo img { height:200px; width:auto; object-fit:contain; }
+    h2 { font-size: 1.3em; margin-bottom: 16px; text-align:center; }
+    .qc-row { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:12px; }
+    .qc-col { flex:1; min-width:180px; }
+    .qc-col label { display:block; margin-bottom:4px; font-weight:bold; font-size:0.85em; text-transform:uppercase; letter-spacing:0.05em; }
+    .qc-col select { width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; font-size:0.95em; }
+    button { background:#222; color:#fff; padding:10px 24px; border:none; border-radius:4px; cursor:pointer; font-size:1em; width:100%; margin-top:4px; }
+    #qc-b2b-result { display:none; margin-top:20px; }
+    .qc-card { display:flex; align-items:center; gap:16px; padding:14px; border:1px solid #ddd; border-radius:6px; margin-bottom:12px; background:#fafafa; }
+    .qc-card img { width:80px; height:80px; object-fit:contain; border-radius:4px; background:#fff; border:1px solid #eee; }
+    .qc-card-info { flex:1; }
+    .qc-card-name { font-weight:600; font-size:0.95rem; color:#222; margin-bottom:4px; }
+    .qc-card-sku { font-size:0.85rem; color:#666; }
+    .qc-card-qty { font-size:0.85rem; color:#e00; margin-top:4px; }
+    .qc-card-shopkit { border-color:#bbb; background:#f0f0f0; }
+  </style>
+</head>
+<body>
+<div id="qc-b2b">
+
+  <div class="qc-logo">
+    <img src="https://cdn.shopify.com/s/files/1/0082/9734/9205/files/ZENO_Logo.jpg?v=1656649091" alt="Zenocycle">
+  </div>
+
+  <h2>🔧 Q-Connector V2 — Product Finder</h2>
+
+  <div class="qc-row">
+    <div class="qc-col">
+      <label>I am a...</label>
+      <select id="qcb-role" onchange="qcbUpdate()">
+        <option value="">-- Select --</option>
+        <option value="consumer">General Consumer</option>
+        <option value="shop">Shop User</option>
+        <option value="distributor">Distributor / Wholesaler</option>
+        <option value="oem">OEM / Brand</option>
+      </select>
+    </div>
+    <div class="qc-col">
+      <label>Bike Type</label>
+      <select id="qcb-bike" onchange="qcbUpdate()">
+        <option value="">-- Select --</option>
+        <option value="road">Road Bike / Gravel Bike</option>
+        <option value="mtb">Mountain Bike (MTB)</option>
+        <option value="touring">Touring</option>
+      </select>
+    </div>
+    <div class="qc-col">
+      <label>Routing Type</label>
+      <select id="qcb-routing" onchange="qcbUpdate()">
+        <option value="">-- Select --</option>
+        <option value="full">Full Internal</option>
+        <option value="semi">Semi-Internal</option>
+        <option value="external">External Routing</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="qc-row">
+    <div class="qc-col">
+      <label>Fluid Type</label>
+      <select id="qcb-fluid" onchange="qcbUpdate()">
+        <option value="">-- Select --</option>
+        <option value="mineral">Mineral Oil</option>
+        <option value="dot">DOT 4/5</option>
+      </select>
+    </div>
+    <div class="qc-col">
+      <label>Brake Model / Spec</label>
+      <select id="qcb-spec">
+        <option value="">-- Select --</option>
+      </select>
+    </div>
+    <div class="qc-col">
+      <label>Number of Sets</label>
+      <select id="qcb-qty">
+        <option value="">-- Select --</option>
+        <option value="1">1 Set (Single brake)</option>
+        <option value="2">2 Sets (Front + Rear)</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="qc-row">
+    <div class="qc-col" style="display:flex;align-items:flex-end;">
+      <button onclick="qcbRecommend()">Find Products</button>
+    </div>
+  </div>
+
+  <div id="qc-b2b-result">
+    <p style="font-weight:bold; margin-bottom:12px;">✅ Recommended Products:</p>
+    <div id="qc-b2b-result-text"></div>
+  </div>
+</div>
+
+<script>
+const qcbProducts = {
+  pin: {
+    name: 'Q-Connector V2 Pin Side Pre-pressed with hose',
+    img: 'https://cdn.shopify.com/s/files/1/0082/9734/9205/files/SLQ2-3-2_-_19-12-2025_16-38-52.png?v=1766133650',
+    skus: { bh90: 'SLQ2-3-2M1', bh59: 'SLQ2-3-2M2', sram: 'SLQ2-3-2D1', hope: 'SLQ2-3-2D2' },
+    base: '/products/q-connector-v2-pin-side-pre-pressed-with-hose',
+    variants: { bh90: '42857949823061', bh59: '42857949855829', sram: '42857949888597', hope: '42857949921365' }
+  },
+  socket: {
+    name: 'Q-Connector V2 Socket Side Pre-pressed with hose',
+    img: 'https://cdn.shopify.com/s/files/1/0082/9734/9205/files/Gemini_Generated_Image_cw24wfcw24wfcw24.png?v=1766132397',
+    skus: { bh90: 'SLQ2-6-1M1', bh59: 'SLQ2-6-1M2', sram: 'SLQ2-6-1D1', hope: 'SLQ2-6-1D2' },
+    base: '/products/q-connector-v2-socket-side-pre-pressed-with-hose',
+    variants: { bh90: '42857949691989', bh59: '42857949724757', sram: '42857949757525', hope: '42857949790293' }
+  },
+  pin_diy: {
+    name: 'Q-Connector V2 SpeedLink Pin Side (DIY Version)',
+    img: 'https://cdn.shopify.com/s/files/1/0082/9734/9205/files/SLQ2-4-2.jpg?v=1778834965',
+    skus: { bh90: 'SLQ2-6-2M1', bh59: 'SLQ2-6-2M2', sram: 'SLQ2-6-2D1', hope: 'SLQ2-6-2D2' },
+    base: '/products/q-connector-v2-speedlink-pin-side-diy-universal',
+    variants: { bh90: '42857949429845', bh59: '42857949462613', sram: '42857949495381', hope: '42857949528149' }
+  },
+  socket_diy: {
+    name: 'Q-Connector V2 SpeedLink Socket Side (DIY Version)',
+    img: 'https://cdn.shopify.com/s/files/1/0082/9734/9205/files/SLQ2-4-1.jpg?v=1778834538',
+    skus: { bh90: 'SLQ2-4-1M1', bh59: 'SLQ2-4-1M2', sram: 'SLQ2-4-1D1', hope: 'SLQ2-4-1D2' },
+    base: '/products/q-connector-v2-speedlink-socket-side-diy-universal',
+    variants: { bh90: '42857949560917', bh59: '42857949593685', sram: '42857949626453', hope: '42857949659221' }
+  },
+  m9: {
+    name: 'Q-Connector V2 M9 Drop Bar Coupler for Shimano (ST-R9120)',
+    img: 'https://cdn.shopify.com/s/files/1/0082/9734/9205/files/SLQ2-5-2.jpg?v=1778835391',
+    skus: { default: 'SLQ2-5-2M' },
+    base: '/products/q-connector-v2-m9-drop-bar-coupler-shimano-st-r9120',
+    variants: {}
+  },
+  m8: {
+    name: 'Q-Connector V2 M8 Drop Bar Coupler - SRAM AXS / Shimano ST-RS685',
+    img: 'https://cdn.shopify.com/s/files/1/0082/9734/9205/files/SLQ2-5-1.jpg?v=1778835762',
+    skus: { shimano: 'SLQ2-5-1M', sram: 'SLQ2-5-1D' },
+    base: '/products/q-connector-v2-m8-drop-bar-coupler-sram-axs-shimano-st-rs685',
+    variants: { shimano: '42499926098005', sram: '42499926130773' }
+  },
+  shopkit: {
+    name: 'Q-Connector V2 Shop Set',
+    img: 'https://cdn.shopify.com/s/files/1/0082/9734/9205/files/SLQ2-SC1-P2-Photoroom01-Photoroom.png?v=1787735066',
+    skus: { default: 'SLQ2-SC1' },
+    base: '/products/q-connector-v2-shop-set',
+    variants: {}
+  },
+};
+
+const qcbData = {
+  road_full_mineral_bh90_1: [['pin','bh90','1'],['socket','bh90','1']],
+  road_full_mineral_bh90_2: [['pin','bh90','2'],['socket','bh90','2']],
+  road_full_mineral_bh59_1: [['pin','bh59','1'],['socket','bh59','1']],
+  road_full_mineral_bh59_2: [['pin','bh59','2'],['socket','bh59','2']],
+  road_full_dot_sram_1:     [['pin','sram','1'],['socket','sram','1']],
+  road_full_dot_sram_2:     [['pin','sram','2'],['socket','sram','2']],
+  road_full_dot_hope_1:     [['pin','hope','1'],['socket','hope','1']],
+  road_full_dot_hope_2:     [['pin','hope','2'],['socket','hope','2']],
+  road_semi_mineral_bh90_1: [['m9',null,'1']],
+  road_semi_mineral_bh90_2: [['m9',null,'2']],
+  road_semi_mineral_bh59_1: [['m8','shimano','1']],
+  road_semi_mineral_bh59_2: [['m8','shimano','2']],
+  road_semi_dot_sram_1:     [['m8','sram','1']],
+  road_semi_dot_sram_2:     [['m8','sram','2']],
+  road_external_mineral_bh90_1: [['pin_diy','bh90','1'],['socket_diy','bh90','1']],
+  road_external_mineral_bh90_2: [['pin_diy','bh90','2'],['socket_diy','bh90','2']],
+  road_external_mineral_bh59_1: [['pin_diy','bh59','1'],['socket_diy','bh59','1']],
+  road_external_mineral_bh59_2: [['pin_diy','bh59','2'],['socket_diy','bh59','2']],
+  road_external_mineral_campy_1: [['pin_diy','bh59','1'],['socket_diy','bh59','1']],
+  road_external_mineral_campy_2: [['pin_diy','bh59','2'],['socket_diy','bh59','2']],
+  road_external_dot_sram_1:     [['pin_diy','sram','1'],['socket_diy','sram','1']],
+  road_external_dot_sram_2:     [['pin_diy','sram','2'],['socket_diy','sram','2']],
+  road_external_dot_hope_1:     [['pin_diy','hope','1'],['socket_diy','hope','1']],
+  road_external_dot_hope_2:     [['pin_diy','hope','2'],['socket_diy','hope','2']],
+  mtb_full_mineral_bh90_1: [['pin','bh90','1'],['socket','bh90','1']],
+  mtb_full_mineral_bh90_2: [['pin','bh90','2'],['socket','bh90','2']],
+  mtb_full_mineral_bh59_1: [['pin','bh59','1'],['socket','bh59','1']],
+  mtb_full_mineral_bh59_2: [['pin','bh59','2'],['socket','bh59','2']],
+  mtb_full_mineral_magura_1: [['pin','bh59','1'],['socket','bh59','1']],
+  mtb_full_mineral_magura_2: [['pin','bh59','2'],['socket','bh59','2']],
+  mtb_full_dot_sram_1:     [['pin','sram','1'],['socket','sram','1']],
+  mtb_full_dot_sram_2:     [['pin','sram','2'],['socket','sram','2']],
+  mtb_full_dot_hope_1:     [['pin','hope','1'],['socket','hope','1']],
+  mtb_full_dot_hope_2:     [['pin','hope','2'],['socket','hope','2']],
+  mtb_full_dot_magura_1:   [['pin','bh59','1'],['socket','bh59','1']],
+  mtb_full_dot_magura_2:   [['pin','bh59','2'],['socket','bh59','2']],
+  mtb_semi_mineral_bh90_1: [['m9',null,'1']],
+  mtb_semi_mineral_bh90_2: [['m9',null,'2']],
+  mtb_semi_mineral_bh59_1: [['m8','shimano','1']],
+  mtb_semi_mineral_bh59_2: [['m8','shimano','2']],
+  mtb_semi_dot_sram_1:     [['m8','sram','1']],
+  mtb_semi_dot_sram_2:     [['m8','sram','2']],
+  mtb_external_mineral_bh90_1: [['pin_diy','bh90','1'],['socket_diy','bh90','1']],
+  mtb_external_mineral_bh90_2: [['pin_diy','bh90','2'],['socket_diy','bh90','2']],
+  mtb_external_mineral_bh59_1: [['pin_diy','bh59','1'],['socket_diy','bh59','1']],
+  mtb_external_mineral_bh59_2: [['pin_diy','bh59','2'],['socket_diy','bh59','2']],
+  mtb_external_dot_sram_1:     [['pin_diy','sram','1'],['socket_diy','sram','1']],
+  mtb_external_dot_sram_2:     [['pin_diy','sram','2'],['socket_diy','sram','2']],
+  mtb_external_dot_hope_1:     [['pin_diy','hope','1'],['socket_diy','hope','1']],
+  mtb_external_dot_hope_2:     [['pin_diy','hope','2'],['socket_diy','hope','2']],
+  touring_full_mineral_bh90_1: [['pin','bh90','1'],['socket','bh90','1']],
+  touring_full_mineral_bh90_2: [['pin','bh90','2'],['socket','bh90','2']],
+  touring_full_dot_sram_1:     [['pin','sram','1'],['socket','sram','1']],
+  touring_full_dot_sram_2:     [['pin','sram','2'],['socket','sram','2']],
+  touring_full_dot_hope_1:     [['pin','hope','1'],['socket','hope','1']],
+  touring_full_dot_hope_2:     [['pin','hope','2'],['socket','hope','2']],
+  touring_semi_dot_sram_1:     [['m8','sram','1']],
+  touring_semi_dot_sram_2:     [['m8','sram','2']],
+  touring_external_mineral_bh90_1: [['pin_diy','bh90','1'],['socket_diy','bh90','1']],
+  touring_external_mineral_bh90_2: [['pin_diy','bh90','2'],['socket_diy','bh90','2']],
+  touring_external_dot_sram_1:     [['pin_diy','sram','1'],['socket_diy','sram','1']],
+  touring_external_dot_sram_2:     [['pin_diy','sram','2'],['socket_diy','sram','2']],
+  touring_external_dot_hope_1:     [['pin_diy','hope','1'],['socket_diy','hope','1']],
+  touring_external_dot_hope_2:     [['pin_diy','hope','2'],['socket_diy','hope','2']],
+};
+
+const qcbSpecOptions = {
+  road_full_mineral:     [{value:'bh90',label:'BH-90'},{value:'bh59',label:'BH-59'}],
+  road_full_dot:         [{value:'sram',label:'SRAM Standard'},{value:'hope',label:'Hope Tech Standard'}],
+  road_semi_mineral:     [{value:'bh90',label:'BH-90'},{value:'bh59',label:'BH-59'}],
+  road_semi_dot:         [{value:'sram',label:'SRAM AXS Brake Lever or Equivalent'}],
+  road_external_mineral: [{value:'bh90',label:'BH-90'},{value:'bh59',label:'BH-59'},{value:'campy',label:'Campagnolo'}],
+  road_external_dot:     [{value:'sram',label:'SRAM Standard'},{value:'hope',label:'Hope Tech Standard'}],
+  mtb_full_mineral:      [{value:'bh90',label:'BH-90'},{value:'bh59',label:'BH-59'},{value:'magura',label:'Magura'}],
+  mtb_full_dot:          [{value:'sram',label:'SRAM Standard'},{value:'hope',label:'Hope Tech Standard'},{value:'magura',label:'Magura'}],
+  mtb_semi_mineral:      [{value:'bh90',label:'BH-90'},{value:'bh59',label:'BH-59'}],
+  mtb_semi_dot:          [{value:'sram',label:'SRAM AXS Brake Lever or Equivalent'}],
+  mtb_external_mineral:  [{value:'bh90',label:'BH-90'},{value:'bh59',label:'BH-59'}],
+  mtb_external_dot:      [{value:'sram',label:'SRAM Standard'},{value:'hope',label:'Hope Tech Standard'}],
+  touring_full_mineral:  [{value:'bh90',label:'BH-90'}],
+  touring_full_dot:      [{value:'sram',label:'SRAM Standard'},{value:'hope',label:'Hope Tech Standard'}],
+  touring_semi_dot:      [{value:'sram',label:'SRAM AXS Brake Lever or Equivalent'}],
+  touring_external_mineral:[{value:'bh90',label:'BH-90'}],
+  touring_external_dot:  [{value:'sram',label:'SRAM Standard'},{value:'hope',label:'Hope Tech Standard'}],
+};
+
+function qcbUpdate() {
+  const bike = document.getElementById('qcb-bike').value;
+  const routing = document.getElementById('qcb-routing').value;
+  const fluid = document.getElementById('qcb-fluid').value;
+  const specSelect = document.getElementById('qcb-spec');
+  const key = [bike, routing, fluid].filter(Boolean).join('_');
+  const opts = qcbSpecOptions[key];
+  specSelect.innerHTML = '<option value="">-- Select --</option>';
+  if (opts && bike && routing && fluid) {
+    opts.forEach(o => { specSelect.innerHTML += `<option value="${o.value}">${o.label}</option>`; });
+  }
+  document.getElementById('qc-b2b-result').style.display = 'none';
+}
+
+function qcbRecommend() {
+  const role = document.getElementById('qcb-role').value;
+  const bike = document.getElementById('qcb-bike').value;
+  const routing = document.getElementById('qcb-routing').value;
+  const fluid = document.getElementById('qcb-fluid').value;
+  const spec = document.getElementById('qcb-spec').value;
+  const qty = document.getElementById('qcb-qty').value;
+  if (!role || !bike || !routing || !fluid || !spec || !qty) {
+    alert('Please complete all selections.');
+    return;
+  }
+  const key = `${bike}_${routing}_${fluid}_${spec}_${qty}`;
+  const result = qcbData[key];
+  const resultDiv = document.getElementById('qc-b2b-result');
+  const resultText = document.getElementById('qc-b2b-result-text');
+
+  const isConsumer = role === 'consumer';
+  const showShopKit = (role === 'shop' || role === 'distributor');
+
+  if (result) {
+    const hasPin = result.some(([pk]) => pk === 'pin');
+    const hasSocket = result.some(([pk]) => pk === 'socket');
+    let html = result.map(([productKey, variantKey, qtyNum]) => {
+      const p = qcbProducts[productKey];
+      const sku = variantKey ? (p.skus[variantKey] || p.skus.default || '-') : (p.skus.default || '-');
+      if (isConsumer) {
+        const url = variantKey && p.variants[variantKey]
+          ? `${p.base}?variant=${p.variants[variantKey]}`
+          : p.base;
+        return `<div class="qc-card">
+          <img src="${p.img}" alt="${p.name}">
+          <div class="qc-card-info">
+            <div class="qc-card-name">${p.name}</div>
+            <div class="qc-card-qty">Quantity: ${qtyNum}</div>
+            <div style="margin-top:6px;"><a href="https://zenocycleparts.com${url}" target="_blank" style="color:#333; font-weight:bold; text-decoration:underline;">Click Here</a></div>
+          </div>
+        </div>`;
+      } else {
+        return `<div class="qc-card">
+          <img src="${p.img}" alt="${p.name}">
+          <div class="qc-card-info">
+            <div class="qc-card-name">${p.name}</div>
+            <div class="qc-card-sku">SKU: <strong>${sku}</strong></div>
+            <div class="qc-card-qty">Quantity: ${qtyNum}</div>
+          </div>
+        </div>`;
+      }
+    }).join('');
+
+    if (showShopKit && hasPin && hasSocket) {
+      const sk = qcbProducts['shopkit'];
+      html += `<div class="qc-card qc-card-shopkit">
+        <img src="${sk.img}" alt="${sk.name}">
+        <div class="qc-card-info">
+          <div class="qc-card-name">💡 Also available as a set: ${sk.name}</div>
+          <div class="qc-card-sku">SKU: <strong>${sk.skus.default}</strong></div>
+        </div>
+      </div>`;
+    }
+    resultText.innerHTML = html;
+  } else {
+    resultText.innerHTML = '<p>No matching spec found. Please contact us for assistance.</p>';
+  }
+  resultDiv.style.display = 'block';
+}
+</script>
+</body>
+</html>
